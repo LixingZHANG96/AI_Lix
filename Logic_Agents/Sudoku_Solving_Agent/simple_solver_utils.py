@@ -2,6 +2,9 @@ rows = 'ABCDEFGHI'
 cols = '123456789'
 
 
+default_grid = "..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3.."
+
+
 def cross(a, b):
     return [s + t for s in a for t in b]
 
@@ -25,7 +28,7 @@ def display(values):
     width = 1 + max(len(values[s]) for s in boxes)
     line = '+'.join(['-' * (width * 3)] * 3)
     for r in rows:
-        print(''.join(values[r + c].center(width) + ('|' if c in '36' else '')
+        print(''.join(values[r+c].center(width)+('|' if c in '36' else '')
                       for c in cols))
         if r in 'CF': print(line)
     return

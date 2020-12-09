@@ -1,4 +1,4 @@
-from utils import *
+from simple_solver_utils import *
 
 
 # `grid` is defined in the test code scope as the following:
@@ -64,7 +64,57 @@ def only_choice(values):
     return values_new
 
 
+def naked_twins(values):
+    """
+    Eliminate values using the naked twins strategy.
+    The naked twins strategy says that if you have two or more unallocated boxes
+    in a unit and there are only two digits that can go in those two boxes, then
+    those two digits can be eliminated from the possible assignments of all other
+    boxes in the same unit.
+
+    Parameters
+    ----------
+    values(dict)
+        a dictionary of the form {'box_name': '123456789', ...}
+
+    Returns
+    -------
+    dict
+        The values dictionary with the naked twins eliminated from peers
+
+    Notes
+    -----
+    Pseudocode for this algorithm on github:
+    https://github.com/udacity/artificial-intelligence/blob/master/Projects/1_Sudoku/pseudocode.md
+    """
+    values_copy = values.copy()
+    for box_A in boxes:
+        if len(values[box_A]) != 2: continue  # Only continue checking if the box has 2 values
+        for unit in units[box_A]:
+            for box_B in unit:
+                if len(values[box_B]) != 2 or box_B == box_A: continue
+                if values[box_A] == values[box_B]:
+                    for value in values[box_A]:
+                        for box in unit:
+                            if box == box_A or box == box_B: continue
+                            values_copy[box] = values_copy[box].replace(value, '')
+    return values_copy
+
+
 def reduce_puzzle(values):
+    """Reduce a Sudoku puzzle by repeatedly applying all constraint strategies
+
+    Parameters
+    ----------
+    values(dict)
+        a dictionary of the form {'box_name': '123456789', ...}
+
+    Returns
+    -------
+    dict or False
+        The values dictionary after continued application of the constraint strategies
+        no longer produces any changes, or False if the puzzle is unsolvable
+    """
     stalled = False
     while not stalled:
         # Check how many boxes have a determined value
@@ -75,6 +125,9 @@ def reduce_puzzle(values):
 
         # Use the Only Choice Strategy
         values = only_choice(values)
+
+        # Use the Only Choice Strategy
+        values = naked_twins(values)
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
@@ -95,7 +148,7 @@ def search(values):
     if all(len(values[s]) == 1 for s in boxes): 
         return values ## Solved!
     # Choose one of the unfilled squares with the fewest possibilities
-    n,s = min((len(values[s]), s) for s in boxes if len(values[s]) > 1)
+    n, s = min((len(values[s]), s) for s in boxes if len(values[s]) > 1)
     # Now use recurrence to solve each one of the resulting sudokus, and 
     for value in values[s]:
         new_sudoku = values.copy()
@@ -106,6 +159,13 @@ def search(values):
 
 
 if __name__ == "__main__":
-    grid = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
-    sudoku_dict = eliminate(grid_values(grid))
+    grid = input("Please input the sudoku as a formatted String of length 81:\n")
+    if len(grid) < 81:
+        print("Invalid input, use internal grid instead!")
+        grid = default_grid
+    sudoku_dict = grid_values(grid)
+    print("The original sudoku: ")
+    display(sudoku_dict)
+    sudoku_dict = search(sudoku_dict)
+    print("The solved sudoku: ")
     display(sudoku_dict)
